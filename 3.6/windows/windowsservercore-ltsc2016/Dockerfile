@@ -8,11 +8,12 @@ FROM microsoft/windowsservercore:ltsc2016
 
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-ENV PYTHON_VERSION 3.6.3
-ENV PYTHON_RELEASE 3.6.3
+ENV PYTHON_VERSION 3.6.6
+ENV PYTHON_RELEASE 3.6.6
 
 RUN $url = ('https://www.python.org/ftp/python/{0}/python-{1}-amd64.exe' -f $env:PYTHON_RELEASE, $env:PYTHON_VERSION); \
 	Write-Host ('Downloading {0} ...' -f $url); \
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
 	Invoke-WebRequest -Uri $url -OutFile 'python.exe'; \
 	\
 	Write-Host 'Installing ...'; \
@@ -41,7 +42,7 @@ RUN $url = ('https://www.python.org/ftp/python/{0}/python-{1}-amd64.exe' -f $env
 	Write-Host 'Complete.';
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 9.0.1
+ENV PYTHON_PIP_VERSION 10.0.1
 
 RUN Write-Host ('Installing pip=={0} ...' -f $env:PYTHON_PIP_VERSION); \
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \

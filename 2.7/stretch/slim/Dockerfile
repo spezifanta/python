@@ -6,6 +6,8 @@ ENV PATH /usr/local/bin:$PATH
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG C.UTF-8
+# https://github.com/docker-library/python/issues/147
+ENV PYTHONIOENCODING UTF-8
 
 # runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,10 +16,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		libreadline7 \
 		libsqlite3-0 \
 		libssl1.1 \
+		netbase \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEY C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF
-ENV PYTHON_VERSION 2.7.14
+ENV PYTHON_VERSION 2.7.15
 
 RUN set -ex \
 	&& buildDeps=" \
@@ -73,7 +76,7 @@ RUN set -ex \
 	&& rm -rf /usr/src/python
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 9.0.1
+ENV PYTHON_PIP_VERSION 10.0.1
 
 RUN set -ex; \
 	\

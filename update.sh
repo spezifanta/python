@@ -57,7 +57,7 @@ for version in "${versions[@]}"; do
 	possibles=( $(
 		{
 			git ls-remote --tags https://github.com/python/cpython.git "refs/tags/v${rcVersion}.*" \
-				| sed -r 's!^.*refs/tags/v([0-9.]+).*$!\1!' \
+				| sed -r 's!^.*refs/tags/v([0-9a-z.]+).*$!\1!' \
 				|| :
 
 			# this page has a very aggressive varnish cache in front of it, which is why we also scrape tags from GitHub
@@ -68,9 +68,22 @@ for version in "${versions[@]}"; do
 		} | sort -ruV
 	) )
 	fullVersion=
+	declare -A impossible=()
 	for possible in "${possibles[@]}"; do
+		rcPossible="${possible%[a-z]*}"
+
+		# varnish is great until it isn't
+		if wget -q -O /dev/null -o /dev/null --spider "https://www.python.org/ftp/python/$rcPossible/Python-$possible.tar.xz"; then
+			fullVersion="$possible"
+			break
+		fi
+
+		if [ -n "${impossible[$rcPossible]:-}" ]; then
+			continue
+		fi
+		impossible[$rcPossible]=1
 		possibleVersions=( $(
-			curl -fsSL "https://www.python.org/ftp/python/$possible/" \
+			wget -qO- -o /dev/null "https://www.python.org/ftp/python/$rcPossible/" \
 				| grep '<a href="Python-'"$rcVersion"'.*\.tar\.xz"' \
 				| sed -r 's!.*<a href="Python-([^"/]+)\.tar\.xz".*!\1!' \
 				| grep $rcGrepV -E -- '[a-zA-Z]+' \
@@ -97,7 +110,7 @@ for version in "${versions[@]}"; do
 	echo "$version: $fullVersion"
 
 	for v in \
-		alpine{3.4,3.6} \
+		alpine{3.6,3.7} \
 		{wheezy,jessie,stretch}{/slim,/onbuild,} \
 		windows/nanoserver-{1709,sac2016} \
 		windows/windowsservercore-{1709,ltsc2016} \
@@ -135,9 +148,20 @@ for version in "${versions[@]}"; do
 			"$dir/Dockerfile"
 
 		case "$variant" in
-			alpine3.4) sed -ri -e 's/libressl/openssl/g' "$dir/Dockerfile" ;;
 			wheezy) sed -ri -e 's/dpkg-architecture --query /dpkg-architecture -q/g' "$dir/Dockerfile" ;;
 		esac
+
+		# https://bugs.python.org/issue32598 (Python 3.7.0b1+)
+		# TL;DR: Python 3.7+ uses OpenSSL functionality which LibreSSL doesn't implement (yet?)
+		if [[ "$version" == 3.7* ]] && [[ "$variant" == alpine* ]]; then
+			sed -ri -e 's/libressl/openssl/g' "$dir/Dockerfile"
+		fi
+
+		# Libraries to build the nis module available in Alpine 3.7, but also require this patch:
+		# https://bugs.python.org/issue32521
+		if [[ "$variant" == alpine* ]] && [[ "$variant" != alpine3.7 ]]; then
+			sed -ri -e '/libnsl-dev/d' -e '/libtirpc-dev/d' "$dir/Dockerfile"
+		fi
 
 		case "$v" in
 			wheezy/slim|jessie/slim)

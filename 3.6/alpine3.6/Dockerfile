@@ -18,7 +18,7 @@ ENV LANG C.UTF-8
 RUN apk add --no-cache ca-certificates
 
 ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
-ENV PYTHON_VERSION 3.6.3
+ENV PYTHON_VERSION 3.6.6
 
 RUN set -ex \
 	&& apk add --no-cache --virtual .fetch-deps \
@@ -46,11 +46,11 @@ RUN set -ex \
 		gdbm-dev \
 		libc-dev \
 		libffi-dev \
+		libressl \
+		libressl-dev \
 		linux-headers \
 		make \
 		ncurses-dev \
-		libressl \
-		libressl-dev \
 		pax-utils \
 		readline-dev \
 		sqlite-dev \
@@ -72,6 +72,9 @@ RUN set -ex \
 		--with-system-ffi \
 		--without-ensurepip \
 	&& make -j "$(nproc)" \
+# set thread stack size to 1MB so we don't segfault before we hit sys.getrecursionlimit()
+# https://github.com/alpinelinux/aports/commit/2026e1259422d4e0cf92391ca2d3844356c649d0
+		EXTRA_CFLAGS="-DTHREAD_STACK_SIZE=0x100000" \
 	&& make install \
 	\
 	&& runDeps="$( \
@@ -98,7 +101,7 @@ RUN cd /usr/local/bin \
 	&& ln -s python3-config python-config
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 9.0.1
+ENV PYTHON_PIP_VERSION 10.0.1
 
 RUN set -ex; \
 	\

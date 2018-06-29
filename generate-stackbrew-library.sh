@@ -2,25 +2,13 @@
 set -Eeuo pipefail
 
 declare -A aliases=(
-	[3.7-rc]='rc'
-	[3.6]='3 latest'
+	[3.8-rc]='rc'
+	[3.7]='3 latest'
 	[2.7]='2'
 )
 
 defaultDebianSuite='stretch'
-declare -A debianSuites=(
-	[2.7]='jessie'
-	[3.4]='jessie'
-	[3.5]='jessie'
-	[3.6]='jessie'
-)
-defaultAlpineVersion='3.6'
-declare -A alpineVersions=(
-	[2.7]='3.4'
-	[3.4]='3.4'
-	[3.5]='3.4'
-	[3.6]='3.4'
-)
+defaultAlpineVersion='3.7'
 
 self="$(basename "$BASH_SOURCE")"
 cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
@@ -86,12 +74,10 @@ join() {
 
 for version in "${versions[@]}"; do
 	rcVersion="${version%-rc}"
-	debianSuite="${debianSuites[$rcVersion]:-$defaultDebianSuite}"
-	alpineVersion="${alpineVersions[$rcVersion]:-$defaultAlpineVersion}"
 
 	for v in \
 		{stretch,jessie,wheezy}{,/slim,/onbuild} \
-		alpine{3.6,3.4} \
+		alpine{3.7,3.6} \
 		windows/windowsservercore-{ltsc2016,1709} \
 		windows/nanoserver-{sac2016,1709} \
 	; do
@@ -124,10 +110,10 @@ for version in "${versions[@]}"; do
 
 		variantAliases=( "${versionAliases[@]/%/-$variant}" )
 		case "$variant" in
-			*-"$debianSuite") # "slim-stretch", etc need "slim"
-				variantAliases+=( "${versionAliases[@]/%/-${variant%-$debianSuite}}" )
+			*-"$defaultDebianSuite") # "slim-stretch", etc need "slim"
+				variantAliases+=( "${versionAliases[@]/%/-${variant%-$defaultDebianSuite}}" )
 				;;
-			"alpine${alpineVersion}")
+			"alpine${defaultAlpineVersion}")
 				variantAliases+=( "${versionAliases[@]/%/-alpine}" )
 				;;
 		esac
@@ -148,11 +134,12 @@ for version in "${versions[@]}"; do
 		sharedTags=()
 		for windowsShared in windowsservercore nanoserver; do
 			if [[ "$variant" == "$windowsShared"* ]]; then
-				sharedTags+=( "$windowsShared" )
+				sharedTags=( "${versionAliases[@]/%/-$windowsShared}" )
+				sharedTags=( "${sharedTags[@]//latest-/}" )
 				break
 			fi
 		done
-		if [ "$variant" = "$debianSuite" ] || [[ "$variant" == 'windowsservercore'* ]]; then
+		if [ "$variant" = "$defaultDebianSuite" ] || [[ "$variant" == 'windowsservercore'* ]]; then
 			sharedTags+=( "${versionAliases[@]}" )
 		fi
 

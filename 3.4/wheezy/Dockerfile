@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEY 97FC712E4C024BBEA48A61ED3A5CA953F73C700D
-ENV PYTHON_VERSION 3.4.7
+ENV PYTHON_VERSION 3.4.8
 
 RUN set -ex \
 	&& buildDeps=' \
@@ -71,7 +71,7 @@ RUN cd /usr/local/bin \
 	&& ln -s python3-config python-config
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 9.0.1
+ENV PYTHON_PIP_VERSION 10.0.1
 
 RUN set -ex; \
 	\

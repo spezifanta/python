@@ -6,13 +6,15 @@ ENV PATH /usr/local/bin:$PATH
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG C.UTF-8
+# https://github.com/docker-library/python/issues/147
+ENV PYTHONIOENCODING UTF-8
 
 # install ca-certificates so that HTTPS works consistently
 # the other runtime dependencies for Python are installed later
 RUN apk add --no-cache ca-certificates
 
 ENV GPG_KEY C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF
-ENV PYTHON_VERSION 2.7.14
+ENV PYTHON_VERSION 2.7.15
 
 RUN set -ex \
 	&& apk add --no-cache --virtual .fetch-deps \
@@ -38,11 +40,11 @@ RUN set -ex \
 		gcc \
 		gdbm-dev \
 		libc-dev \
+		libressl \
+		libressl-dev \
 		linux-headers \
 		make \
 		ncurses-dev \
-		libressl \
-		libressl-dev \
 		pax-utils \
 		readline-dev \
 		sqlite-dev \
@@ -60,6 +62,9 @@ RUN set -ex \
 		--enable-shared \
 		--enable-unicode=ucs4 \
 	&& make -j "$(nproc)" \
+# set thread stack size to 1MB so we don't segfault before we hit sys.getrecursionlimit()
+# https://github.com/alpinelinux/aports/commit/2026e1259422d4e0cf92391ca2d3844356c649d0
+		EXTRA_CFLAGS="-DTHREAD_STACK_SIZE=0x100000" \
 	&& make install \
 	\
 	&& runDeps="$( \
@@ -80,7 +85,7 @@ RUN set -ex \
 	&& rm -rf /usr/src/python
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 9.0.1
+ENV PYTHON_PIP_VERSION 10.0.1
 
 RUN set -ex; \
 	\

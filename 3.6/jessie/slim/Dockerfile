@@ -22,10 +22,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		libreadline6 \
 		libsqlite3-0 \
 		libssl1.0.0 \
+		netbase \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
-ENV PYTHON_VERSION 3.6.3
+ENV PYTHON_VERSION 3.6.6
 
 RUN set -ex \
 	&& buildDeps=" \
@@ -93,7 +94,7 @@ RUN cd /usr/local/bin \
 	&& ln -s python3-config python-config
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 9.0.1
+ENV PYTHON_PIP_VERSION 10.0.1
 
 RUN set -ex; \
 	\
